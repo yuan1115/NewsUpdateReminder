@@ -33,7 +33,8 @@
 
 #### 目录
 
-	|-- collection.py	新浪微博个人主页实时更新提醒	
+	|-- collection.py	新浪微博个人主页实时更新提醒
+	|-- crontab.py      定时任务设置脚本  	
 	|-- .env            环境配置文件
 	|-- README.md       说明文档
 
