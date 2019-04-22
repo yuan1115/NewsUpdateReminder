@@ -2,7 +2,7 @@
 # @Author: root
 # @Date:   2019-04-08 11:03:09
 # @Last Modified by:   jmx
-# @Last Modified time: 2019-04-15 15:15:47
+# @Last Modified time: 2019-04-22 10:45:02
 import urllib.request
 from bs4 import BeautifulSoup
 import re
@@ -14,6 +14,8 @@ import pymysql
 import json
 import sys
 import os
+import traceback
+import datetime
 
 
 def env(name=''):
@@ -72,22 +74,22 @@ class conllection():
                 content = self.getDetail(url)
                 html = '''
                 <div class="main">
-					<table border="1" cellpadding="10" cellspacing="0">
-						<tr>
-							<td>发布时间</td>
-							<td>{}</td>
-						</tr>
-						<tr>
-							<td>原文链接</td>
-							<td><a target="_blank" href="{}">原文链接</a></td>
-						</tr>
-						<tr>
-							<td>内容</td>
-							<td>{}</td>
-						</tr>
-					</table>
-				</div>
-				'''.format(create_date, url, content)
+                    <table border="1" cellpadding="10" cellspacing="0">
+                        <tr>
+                            <td>发布时间</td>
+                            <td>{}</td>
+                        </tr>
+                        <tr>
+                            <td>原文链接</td>
+                            <td><a target="_blank" href="{}">原文链接</a></td>
+                        </tr>
+                        <tr>
+                            <td>内容</td>
+                            <td>{}</td>
+                        </tr>
+                    </table>
+                </div>
+                '''.format(create_date, url, content)
                 is_send = sendEmail(html, name)
                 # is_send = 1
                 if(is_send):
@@ -119,21 +121,24 @@ class conllection():
             soup = BeautifulSoup(imgbox_is_exists.group(), 'html.parser')
             row = soup.find_all('ul')[0]
             actData = row.get('action-data')
-            actDataList = actData.split('&')
-            imgbox = ''
-            for i in actDataList:
-                if(i.find("clear_picSrc") != -1):
-                    imgurl = i.split("=")[1].split(",")
-                    imgbox = ''
-                    for j in imgurl:
-                        imgurl = "http:"+j.replace("%2F", '/')
-                        imgbox += "<img src='{}'/>".format(imgurl)
+            if(actData != None):
+                actDataList = actData.split('&')
+                imgbox = ''
+                for i in actDataList:
+                    if(i.find("clear_picSrc") != -1):
+                        imgurl = i.split("=")[1].split(",")
+                        imgbox = ''
+                        for j in imgurl:
+                            imgurl = "http:"+j.replace("%2F", '/')
+                            imgbox += "<img src='{}'/>".format(imgurl)
+            else:
+                imgbox = ''
         else:
             imgbox = ''
         return content+imgbox
 
 
-def sendEmail(html, name):
+def sendEmail(html, name, receivers=env("receivers")):
     '''[summary]
 
     [description]
@@ -144,14 +149,12 @@ def sendEmail(html, name):
     mail_pass = env("mail_pass")  # 口令
 
     sender = env("sender")
-    # 接收邮件，可设置为你的QQ邮箱或者其他邮箱
-    receivers = env("receivers")
 
     message = MIMEText(html, 'html', 'utf-8')
     message['From'] = Header("新浪微博更新监控", 'utf-8')
     # message['To'] = Header("使用者", 'utf-8')
 
-    subject = '<{}>更新提醒'.format(name)
+    subject = '<{}>提醒'.format(name)
     message['Subject'] = Header(subject, 'utf-8')
     try:
         smtpObj = smtplib.SMTP()
@@ -209,6 +212,24 @@ class mysql():
 
 
 if __name__ == '__main__':
-    urlList = mysql().select('select * from url_list')
-    for i in urlList:
-        conllection(i['url'], i['name'])
+    try:
+        urlList = mysql().select('select * from url_list')
+        for i in urlList:
+            conllection(i['url'], i['name'])
+    except Exception as e:
+        traceback.print_exc()
+        html = '''
+                <div class="main">
+                    <table border="1" cellpadding="10" cellspacing="0">
+                        <tr>
+                            <td>时间</td>
+                            <td>{}</td>
+                        </tr>
+                        <tr>
+                            <td>异常信息</td>
+                            <td><a target="_blank" href="http://bt.com:8888">{}</a></td>
+                        </tr>
+                    </table>
+                </div>
+                '''.format(datetime.datetime.now(), str(e))
+        sendEmail(html, '脚本异常', '1837461054@qq.com')
