@@ -6,6 +6,8 @@
 
 ##### 环境
 
+* liunx
+* crontab
 * python3+
 * BeautifulSoup4
 * pymysql
@@ -14,6 +16,7 @@
 
 * 脚本需要安装py3+，需要的库BeautifulSoup4，pymysql  
 * clone脚本项目之后还需要在脚本目录新建一个.env配置文件，配置文件参数和格式见下方	
+* crontab定时执行脚本
 
 ##### 配置文件.env
 	
@@ -27,3 +30,10 @@
 		'db_pwd':'root',
 		'db_name':'news'
 	}
+
+#### 目录
+
+	|-- collection.py	新浪微博个人主页实时更新提醒	
+	|-- .env            环境配置文件
+	|-- README.md       说明文档
+
