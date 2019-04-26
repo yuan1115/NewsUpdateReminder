@@ -2,7 +2,7 @@
 # @Author: root
 # @Date:   2019-04-08 11:03:09
 # @Last Modified by:   jmx
-# @Last Modified time: 2019-04-22 10:45:02
+# @Last Modified time: 2019-04-26 15:23:54
 import urllib.request
 from bs4 import BeautifulSoup
 import re
@@ -117,13 +117,13 @@ class conllection():
 
         pattern = re.compile('<ul class="WB_media_a.*?".*?>\s*?</ul>')
         imgbox_is_exists = re.search(pattern, data)
+        imgbox = ''
         if(imgbox_is_exists):
             soup = BeautifulSoup(imgbox_is_exists.group(), 'html.parser')
             row = soup.find_all('ul')[0]
             actData = row.get('action-data')
             if(actData != None):
                 actDataList = actData.split('&')
-                imgbox = ''
                 for i in actDataList:
                     if(i.find("clear_picSrc") != -1):
                         imgurl = i.split("=")[1].split(",")
@@ -131,10 +131,6 @@ class conllection():
                         for j in imgurl:
                             imgurl = "http:"+j.replace("%2F", '/')
                             imgbox += "<img src='{}'/>".format(imgurl)
-            else:
-                imgbox = ''
-        else:
-            imgbox = ''
         return content+imgbox
 
 
@@ -157,14 +153,13 @@ def sendEmail(html, name, receivers=env("receivers")):
     subject = '<{}>提醒'.format(name)
     message['Subject'] = Header(subject, 'utf-8')
     try:
-        smtpObj = smtplib.SMTP()
-        smtpObj.connect(mail_host, 25)    # 25 为 SMTP 端口号
-        smtpObj.login(mail_user, mail_pass)
-        smtpObj.sendmail(sender, receivers, message.as_string())
-        print('success')
+        server = smtplib.SMTP_SSL("smtp.qq.com", 465)  # 发件人邮箱中的SMTP服务器，端口是25
+        server.login(sender, mail_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
+        server.sendmail(sender, receivers, message.as_string())
+        print('邮件发送成功')
         return True
     except smtplib.SMTPException:
-        print('error')
+        print('邮件发送失败')
         return False
 
 
